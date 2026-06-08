@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class="max-w-2xl mx-auto px-4">
     <div class="text-center mb-5">
       <h1 class="text-2xl font-bold text-white mb-1">TRON Energy Rental</h1>
@@ -146,23 +146,160 @@
       </div>
     </div>
   </div>
+  <Toaster :show="toast.show" :message="toast.message" isError="toast.isError" />
+</template> -->
+<template>
+  <div class="max-w-2xl mx-auto px-4">
+    <div class="text-center mb-5">
+      <h1 class="text-2xl font-bold text-white mb-1">TRON Energy Rental</h1>
+      <p class="text-xs text-gray-400">Maximize Energy. Minimize Cost.</p>
+    </div>
+
+    <div v-if="loading" class="text-center py-10 text-amber-500 font-semibold">
+      Loading configurations from API...
+    </div>
+
+    <div v-else class="bg-gray-900/80 backdrop-blur-xl rounded-lg overflow-hidden">
+      <div class="p-4 border-b border-white/5">
+        <div class="flex gap-2">
+          <button @click="paymentMethod = 'qr'"
+            :class="paymentMethod === 'qr' ? 'bg-amber-500 text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-800/30'"
+            class="flex-1 px-2 sm:px-4 py-3 rounded-lg font-medium text-sm transition-all">
+            <div class="flex items-center justify-center gap-2">
+              <span class="text-xs sm:text-sm">QR Code</span>
+            </div>
+          </button>
+          <button @click="paymentMethod = 'tronlink'"
+            :class="paymentMethod === 'tronlink' ? 'bg-amber-500 text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-800/30'"
+            class="flex-1 px-4 py-3 rounded-2xl font-medium text-sm transition-all">
+            <div class="flex items-center justify-center gap-2">
+              <span class="text-xs sm:text-sm">TronLink</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-5 space-y-6">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Select Package</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button v-for="pkg in packages" :key="pkg.id" @click="selectedPackage = pkg"
+              :class="selectedPackage && selectedPackage.id === pkg.id ? 'bg-amber-500/10 ring-2 ring-amber-500 border-transparent' : 'bg-gray-800/50 hover:bg-gray-800/70 border-white/5'"
+              class="p-3 rounded-lg transition-all">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-yellow-400 text-base">⚡</span>
+                  <span class="text-base font-bold text-white">{{ parseInt(pkg.energyAmount).toLocaleString() }}</span>
+                </div>
+                <span class="text-xs text-gray-400">{{ pkg.durationHours }}h</span>
+              </div>
+              <div class="flex items-baseline gap-1">
+                <span class="text-xl font-bold text-amber-400">{{ pkg.priceInTrx }}</span>
+                <span class="text-xs text-gray-400">TRX</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <template v-if="paymentMethod === 'qr'">
+          <div class="bg-amber-500/10 ring ring-amber-500 rounded-xl p-4">
+            <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+              <span>📋</span> Payment Instructions
+            </h3>
+
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+              <div class="w-full md:flex-1 space-y-3 text-xs text-amber-100">
+                <div class="flex gap-3 items-start">
+                  <div class="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 mt-0.5">1</div>
+                  <p class="pt-0.5 text-gray-300">Scan QR or copy address below</p>
+                </div>
+                <div class="flex gap-3 items-start">
+                  <div class="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 mt-0.5">2</div>
+                  <p class="pt-0.5 text-gray-300">Send <span class="text-yellow-400 font-bold" v-if="selectedPackage">{{ selectedPackage.priceInTrx }} TRX</span></p>
+                </div>
+
+                <div class="pt-4 border-t border-white/5">
+                  <p class="text-xs text-amber-300 mb-2 uppercase font-semibold tracking-wider">Payment Address</p>
+                  <div class="flex gap-2">
+                    <input readonly
+                      class="flex-1 text-[11px] bg-gray-950/80 px-3 py-2.5 rounded border border-amber-500/30 text-yellow-400 focus:outline-none"
+                      type="text" :value="walletInfo.qrAddress" />
+                    <button @click="copyWallet"
+                      class="px-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded transition-all text-xs">
+                      📋
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="w-full md:w-auto flex justify-center shrink-0">
+                <div class="bg-white p-3 rounded-lg shadow-xl shadow-black/50" v-if="walletInfo.qrCode">
+                  <img width="160" height="160" alt="QR Payment" class="w-32 h-32 sm:w-36 sm:h-36" :src="walletInfo.qrCode" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        
+        <template v-if="paymentMethod === 'tronlink'">
+          <button disabled class="w-full py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-all">
+            Connect Wallet First
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+  <Toaster :show="toast.show" :message="toast.message" :isError="toast.isError" />
 </template>
-
 <script setup>
-import { ref } from 'vue'
-
+import { ref, reactive, onMounted } from 'vue'
+import axios from 'axios'
+import Toaster from './component/Toaster.vue'
+import { API_ENDPOINTS } from '../config/api.config'
 const paymentMethod = ref('qr')
-const packages = [
-  { id: 1, energy: 65000, duration: '1h', price: 3.0 },
-  { id: 2, energy: 131000, duration: '1h', price: 5.6 },
-  { id: 3, energy: 195000, duration: '1h', price: 8.5 },
-  { id: 4, energy: 260000, duration: '1h', price: 11.0 },
-]
-const selectedPackage = ref(packages[0])
-const walletA = ref('TBxcnznndzRgx1an4fy6hK8xqswtzH4WSH')
+const loading = ref(true)
+const packages = ref([])
+const selectedPackage = ref(null)
+const walletInfo = ref({ qrAddress: '', qrCodeUrl: '' })
 
-function copyWallet() {
-  navigator.clipboard.writeText(walletA.value)
-  alert('Copied payment address successfully!')
+const toast = reactive({
+  show: false,
+  message: '',
+  isError: false
+})
+
+function showToast(msg) {
+  toast.message = msg
+  toast.isError= true
+  toast.show = true
+
+  setTimeout(() => {
+    toast.show = false
+  }, 3000)
 }
+function copyWallet() {
+  if (!walletInfo.value.qrAddress) return
+  navigator.clipboard.writeText(walletInfo.value.qrAddress)
+  showToast('Copied payment address successfully!')
+}
+onMounted(async () => {
+  try {
+    // Sử dụng đường dẫn từ file config riêng biệt biệt, code gọn gàng hơn hẳn
+    const [pkgRes, walletRes] = await Promise.all([
+      axios.get(API_ENDPOINTS.PACKAGES),
+      axios.get(API_ENDPOINTS.WALLET)
+    ])
+    
+    packages.value = pkgRes.data
+    if (packages.value.length > 0) {
+      selectedPackage.value = packages.value[0]
+    }
+    walletInfo.value = walletRes.data
+  } catch (error) {
+    console.error(error)
+    showToast('Failed to connect with system API endpoints.', true)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
