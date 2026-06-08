@@ -8,7 +8,7 @@ import { TelegramModule } from './telegram/telegram.module';
 import { OrdersModule } from './orders/orders.module';
 import { EnergyPackage } from './entities/energy-package.entity';
 import { PlatformWallet } from './entities/platform-wallet.entity';
-
+import { Order } from './entities/order.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -19,7 +19,7 @@ import { PlatformWallet } from './entities/platform-wallet.entity';
       username: process.env.DB_USERNAME ?? 'root',
       password: process.env.DB_PASSWORD ?? '',
       database: process.env.DB_DATABASE ?? 'tron',
-      entities: [EnergyPackage, PlatformWallet],
+      entities: [EnergyPackage, PlatformWallet, Order],
       synchronize: true,
       autoLoadEntities: true,
     }),
